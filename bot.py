@@ -220,7 +220,7 @@ def get_or_create_chat(user_id: str):
     if user_id not in user_chats:
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel(
-            model_name= gemini-2.0-flash
+            model_name= "gemini-2.0-flash",
             tools=TOOL_DECLARATIONS,
             system_instruction=SYSTEM_PROMPT,
         )
