@@ -1,5 +1,4 @@
-services:
-  - type: web
+false - type: web
     name: gurusigmabot
     env: python
     buildCommand: pip install -r requirements.txt
@@ -8,4 +7,6 @@ services:
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: GEMINI_API_KEY
-        sync: false
+        sync: - falsa
+      - key: PYTHON_VERSION
+        value: 3.11.9
