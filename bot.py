@@ -1,6 +1,8 @@
 import os
 import logging
+import threading
 from collections import defaultdict
+from flask import Flask
 from telegram import Update
 from telegram.ext import (
     ApplicationBuilder,
@@ -11,7 +13,9 @@ from telegram.ext import (
 )
 import google.generativeai as genai
 
-logging.basicConfig(format='%(asctime)s | %(levelname)s | %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s | %(levelname)s | %(message)s', level=logging.INFO
+)
 logger = logging.getLogger(__name__)
 
 TELEGRAM_BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
@@ -24,6 +28,23 @@ SYSTEM_PROMPT = 'You are Gurusigmabot, a helpful personal AI assistant. You help
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel(model_name=MODEL_NAME, system_instruction=SYSTEM_PROMPT)
 conversation_history = defaultdict(list)
+
+# ---- Flask keep-alive server ----
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+def home():
+    return 'Gurusigmabot is running!'
+
+def run_web():
+    flask_app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
+
+def keep_alive():
+    t = threading.Thread(target=run_web)
+    t.daemon = True
+    t.start()
+    logger.info('Keep-alive web server started.')
+# ---------------------------------
 
 def _trim_history(user_id):
     history = conversation_history[user_id]
@@ -65,6 +86,7 @@ async def handle_message(update, context):
         await update.message.reply_text(f'Error: {exc}')
 
 def main():
+    keep_alive()
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(CommandHandler('start', start))
     app.add_handler(CommandHandler('help', help_command))
