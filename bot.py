@@ -3,6 +3,7 @@ import json
 import logging
 import sqlite3
 import threading
+import io
 from datetime import datetime, timezone
 
 from flask import Flask
@@ -71,7 +72,18 @@ def init_db():
 # ---------------------------------------------------------------------------
 # Tool Functions
 # ---------------------------------------------------------------------------
-
+def generate_image(prompt: str):
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel("gemini-2.5-flash-image")
+        response = model.generate_content(prompt)
+        for part in response.candidates[0].content.parts:
+            if part.inline_data is not None:
+                return part.inline_data.data
+        return None
+    except Exception as e:
+        logger.error(f"Image generation error: {e}")
+        return None
 def web_search(query: str) -> str:
     try:
         with DDGS() as ddgs:
@@ -301,7 +313,17 @@ async def remind_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     reminders = get_reminders(user_id)
     await update.message.reply_text(f"⏰ *Your Reminders:*\n\n{reminders}", parse_mode="Markdown")
-
+async def image_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    prompt = " ".join(context.args) if context.args else ""
+    if not prompt:
+        await update.message.reply_text("Photo kaisi chahiye? Jaise: /image ek sunset beach ki photo")
+        return
+    await update.message.chat.send_action("upload_photo")
+    image_bytes = generate_image(prompt)
+    if image_bytes:
+        await update.message.reply_photo(photo=io.BytesIO(image_bytes))
+    else:
+        await update.message.reply_text("Sorry, photo generate nahi ho payi. Free quota khatam ho sakta hai, thodi der baad try karo.")
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.text:
         return
@@ -353,6 +375,7 @@ def main():
     application.add_handler(CommandHandler("clear", clear_command))
     application.add_handler(CommandHandler("memory", memory_command))
     application.add_handler(CommandHandler("remind", remind_command))
+    application.add_handler(CommandHandler("image", image_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_error_handler(error_handler)
     logger.info("Gurusigmabot starting...")
