@@ -4,7 +4,7 @@ import logging
 import sqlite3
 import threading
 import io
-from huggingface_hub import
+from huggingface_hub import InferenceClient
 from flask import Flask
 from telegram import Update
 from telegram.ext import (
