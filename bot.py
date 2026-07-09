@@ -4,8 +4,7 @@ import logging
 import sqlite3
 import threading
 import io
-from datetime import datetime, timezone
-
+from huggingface_hub import
 from flask import Flask
 from telegram import Update
 from telegram.ext import (
@@ -24,6 +23,7 @@ from duckduckgo_search import DDGS
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
 PORT = int(os.environ.get("PORT", 10000))
 DB_PATH = os.environ.get("DB_PATH", "gurusigma.db")
 
