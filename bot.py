@@ -4,6 +4,7 @@ import logging
 import sqlite3
 import threading
 import io
+from datetime import datetime, timezone
 from huggingface_hub import InferenceClient
 from flask import Flask
 from telegram import Update
@@ -13,10 +14,8 @@ from telegram.ext import (
     MessageHandler,
     filters,
     ContextTypes,
-)
 import google.generativeai as genai
 from duckduckgo_search import DDGS
-
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -112,16 +111,7 @@ def get_memory(user_id: str) -> str:
     try:
         conn = get_db_connection()
         cursor = conn.execute(
-            "SELECT fact, created_at FROM memories WHERE usedef generate_image(prompt: str):
-    try:
-        client = InferenceClient(provider="wavespeed", api_key=HF_TOKEN)
-        image = client.text_to_image(prompt, model="black-forest-labs/FLUX.1-dev")
-        buf = io.BytesIO()
-        image.save(buf, format="PNG")
-        return buf.getvalue()
-    except Exception as e:
-        logger.error(f"Image generation error: {e}", exc_info=True)
-        return Noner_id = ? ORDER BY created_at DESC LIMIT 50",
+            "SELECT fact, created_at FROM memories WHERE user_id = ? ORDER BY created_at DESC LIMIT 50",
             (str(user_id),),
         )
         rows = cursor.fetchall()
@@ -131,9 +121,7 @@ def get_memory(user_id: str) -> str:
         facts = [f"• {row[0]} (saved {row[1][:10]})" for row in rows]
         return "\n".join(facts)
     except Exception as e:
-        return f"Failed to retrieve memories: {str(e)}"
-
-def set_reminder(user_id: str, task: str, time_str: str) -> str:
+        return f"Failed to retrieve memories: {str(e)}"set_reminder(user_id: str, task: str, time_str: str) -> str:
     try:
         conn = get_db_connection()
         conn.execute(
