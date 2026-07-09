@@ -74,15 +74,13 @@ def init_db():
 # ---------------------------------------------------------------------------
 def generate_image(prompt: str):
     try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-2.5-flash-image")
-        response = model.generate_content(prompt)
-        for part in response.candidates[0].content.parts:
-            if part.inline_data is not None:
-                return part.inline_data.data
-        return None
+        client = InferenceClient(provider="wavespeed", api_key=HF_TOKEN)
+        image = client.text_to_image(prompt, model="black-forest-labs/FLUX.1-dev")
+        buf = io.BytesIO()
+        image.save(buf, format="PNG")
+        return buf.getvalue()
     except Exception as e:
-        logger.error(f"Image generation error: {e}")
+        logger.error(f"Image generation error: {e}", exc_info=True)
         return None
 def web_search(query: str) -> str:
     try:
@@ -114,7 +112,16 @@ def get_memory(user_id: str) -> str:
     try:
         conn = get_db_connection()
         cursor = conn.execute(
-            "SELECT fact, created_at FROM memories WHERE user_id = ? ORDER BY created_at DESC LIMIT 50",
+            "SELECT fact, created_at FROM memories WHERE usedef generate_image(prompt: str):
+    try:
+        client = InferenceClient(provider="wavespeed", api_key=HF_TOKEN)
+        image = client.text_to_image(prompt, model="black-forest-labs/FLUX.1-dev")
+        buf = io.BytesIO()
+        image.save(buf, format="PNG")
+        return buf.getvalue()
+    except Exception as e:
+        logger.error(f"Image generation error: {e}", exc_info=True)
+        return Noner_id = ? ORDER BY created_at DESC LIMIT 50",
             (str(user_id),),
         )
         rows = cursor.fetchall()
