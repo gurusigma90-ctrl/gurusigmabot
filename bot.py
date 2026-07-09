@@ -14,8 +14,10 @@ from telegram.ext import (
     MessageHandler,
     filters,
     ContextTypes,
+)
 import google.generativeai as genai
 from duckduckgo_search import DDGS
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -71,6 +73,7 @@ def init_db():
 # ---------------------------------------------------------------------------
 # Tool Functions
 # ---------------------------------------------------------------------------
+
 def generate_image(prompt: str):
     try:
         client = InferenceClient(provider="wavespeed", api_key=HF_TOKEN)
@@ -81,6 +84,7 @@ def generate_image(prompt: str):
     except Exception as e:
         logger.error(f"Image generation error: {e}", exc_info=True)
         return None
+
 def web_search(query: str) -> str:
     try:
         with DDGS() as ddgs:
@@ -121,7 +125,9 @@ def get_memory(user_id: str) -> str:
         facts = [f"• {row[0]} (saved {row[1][:10]})" for row in rows]
         return "\n".join(facts)
     except Exception as e:
-        return f"Failed to retrieve memories: {str(e)}"set_reminder(user_id: str, task: str, time_str: str) -> str:
+        return f"Failed to retrieve memories: {str(e)}"
+
+def set_reminder(user_id: str, task: str, time_str: str) -> str:
     try:
         conn = get_db_connection()
         conn.execute(
@@ -286,9 +292,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "*Commands:*\n/start /help /clear /memory /remind\n\n"
+        "*Commands:*\n/start /help /clear /memory /remind /image\n\n"
         "*What I can do:*\n• Answer questions (searches web if needed)\n"
         "• Remember facts ('Remember I like Python')\n• Set reminders\n"
+        "• Generate images (/image a cute cat)\n"
         "• Write emails, code, content\n• Help make money online\n\nJust message naturally!",
         parse_mode="Markdown",
     )
@@ -308,6 +315,7 @@ async def remind_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     reminders = get_reminders(user_id)
     await update.message.reply_text(f"⏰ *Your Reminders:*\n\n{reminders}", parse_mode="Markdown")
+
 async def image_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prompt = " ".join(context.args) if context.args else ""
     if not prompt:
@@ -319,6 +327,7 @@ async def image_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(photo=io.BytesIO(image_bytes))
     else:
         await update.message.reply_text("Sorry, photo generate nahi ho payi. Free quota khatam ho sakta hai, thodi der baad try karo.")
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.text:
         return
